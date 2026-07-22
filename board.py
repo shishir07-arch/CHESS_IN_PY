@@ -22,10 +22,38 @@ class Board:
     def printBoard(self):
         for row in self.board:
             print(row)
+
     def movePiece(self, letter, number, newLetter, newNumber):
-        self.board[rankToRow[newNumber]][indexLetters[newLetter]] = self.board[rankToRow[number]][indexLetters[letter]] 
-        self.board[rankToRow[number]][indexLetters[letter]] = "."
-        self.printBoard()
+
+        if self.board[rankToRow[number]][indexLetters[letter]] == "." :
+            print("NO PIECE EXISTS")
+        
+        else:
+            self.board[rankToRow[newNumber]][indexLetters[newLetter]] = self.board[rankToRow[number]][indexLetters[letter]] 
+            self.board[rankToRow[number]][indexLetters[letter]] = "."
+            self.printBoard()
+
+    def whitePawnValidation(self, letter, number, newLetter, newNumber):
+        if newNumber>7:
+            print("INVALID")
+            return
+        if newLetter > "h":
+            return
+        
+        elif newNumber>number:
+            if number == 2:
+                if newLetter == letter:
+                    if newNumber-number>2:
+                        print("INVALID")
+                        return
+                    if self.board[rankToRow[newNumber]][indexLetters[newLetter]] != ".":
+                        print("INVALID")
+                        return
+                
+                
+
+        pass
+
     def resetBoard(self):
         self.board = self.createBoard()
         self.printBoard()
