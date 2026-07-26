@@ -27,6 +27,7 @@ class Board:
 
         if self.board[rankToRow[number]][indexLetters[letter]] == "." :
             print("NO PIECE EXISTS")
+            return
         
         else:
             self.board[rankToRow[newNumber]][indexLetters[newLetter]] = self.board[rankToRow[number]][indexLetters[letter]] 
@@ -34,25 +35,72 @@ class Board:
             self.printBoard()
 
     def whitePawnValidation(self, letter, number, newLetter, newNumber):
-        if newNumber>7:
-            print("INVALID")
-            return
-        if newLetter > "h":
-            return
-        
-        elif newNumber>number:
-            if number == 2:
-                if newLetter == letter:
-                    if newNumber-number>2:
-                        print("INVALID")
-                        return
-                    if self.board[rankToRow[newNumber]][indexLetters[newLetter]] != ".":
-                        print("INVALID")
-                        return
-                
-                
 
-        pass
+    # Check starting position contains a white pawn
+        if self.board[rankToRow[number]][indexLetters[letter]] != "P":
+            print("NO WHITE PAWN EXISTS")
+            return False
+
+        # Check bounds
+        if newNumber < 1 or newNumber > 8:
+            print("INVALID")
+            return False
+
+        if newLetter not in indexLetters:
+            print("INVALID")
+            return False
+
+        startCol = indexLetters[letter]
+        newCol = indexLetters[newLetter]
+
+        row = rankToRow[newNumber]
+        col = indexLetters[newLetter]
+
+        destination = self.board[row][col]
+
+        # Moving forward one square
+        if newLetter == letter and newNumber == number + 1:
+
+            if destination == ".":
+                print("VALID")
+                self.movePiece(letter, number, newLetter, newNumber)
+                return True
+
+            else:
+                print("INVALID")
+                return False
+
+
+        # Moving forward two squares from starting position
+        if number == 2 and newLetter == letter and newNumber == 4:
+
+            middleSquare = self.board[rankToRow[3]][startCol]
+
+            if middleSquare == "." and destination == ".":
+                print("VALID")
+                self.movePiece(letter, number, newLetter, newNumber)
+                return True
+
+            else:
+                print("INVALID")
+                return False
+
+
+        # Capturing diagonally
+        if newNumber == number + 1 and abs(newCol - startCol) == 1:
+
+            if destination != "." and destination.islower():  # black piece
+                print("VALID")
+                self.movePiece(letter, number, newLetter, newNumber)
+                return True
+
+            else:
+                print("INVALID")
+                return False
+
+
+        print("INVALID")
+        return False
 
     def resetBoard(self):
         self.board = self.createBoard()
@@ -61,7 +109,7 @@ class Board:
 
 game = Board()
 #game.printBoard()
-#game.movePiece("a",2,"a",3)
+game.movePiece("a",2,"a",3)
 # game2 = Board()
 # game2.printBoard()
-game.resetBoard()
+#game.resetBoard()
