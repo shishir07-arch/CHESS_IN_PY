@@ -32,15 +32,43 @@ class Board:
 
     def movePiece(self, letter, number, newLetter, newNumber):
 
-        if self.board[rankToRow[number]][indexLetters[letter]] == "." :
-            print("NO PIECE EXISTS")
-            return
-        
-        else:
-            self.board[rankToRow[newNumber]][indexLetters[newLetter]] = self.board[rankToRow[number]][indexLetters[letter]] 
-            self.board[rankToRow[number]][indexLetters[letter]] = "."
-            self.printBoard()
+        if letter not in indexLetters or newLetter not in indexLetters:
+            print("INVALID FILE")
+            return False
 
+        if number not in rankToRow or newNumber not in rankToRow:
+            print("INVALID RANK")
+            return False
+
+        piece = self.board[rankToRow[number]][indexLetters[letter]]
+
+        if piece == ".":
+            print("NO PIECE EXISTS")
+            return False
+
+        if piece == "P":
+            return self.whitePawnValidation(letter, number, newLetter, newNumber)
+
+        elif piece == "p":
+            return self.blackPawnValidation(letter, number, newLetter, newNumber)
+
+        elif piece in ("R", "r"):
+            return self.rookLogic(letter, number, newLetter, newNumber)
+        else:
+            print("PIECE NOT IMPLEMENTED")
+            return False
+
+
+    def _executeMove(self, letter, number, newLetter, newNumber):
+
+        self.board[rankToRow[newNumber]][indexLetters[newLetter]] = \
+            self.board[rankToRow[number]][indexLetters[letter]]
+
+        self.board[rankToRow[number]][indexLetters[letter]] = "."
+
+        self.printBoard()
+
+   
     def whitePawnValidation(self, letter, number, newLetter, newNumber):
 
     # Check starting position contains a white pawn
@@ -70,7 +98,7 @@ class Board:
 
             if destination == ".":
                 print("VALID")
-                self.movePiece(letter, number, newLetter, newNumber)
+                self._executeMove(letter, number, newLetter, newNumber)
                 return True
 
             else:
@@ -85,7 +113,7 @@ class Board:
 
             if middleSquare == "." and destination == ".":
                 print("VALID")
-                self.movePiece(letter, number, newLetter, newNumber)
+                self._executeMove(letter, number, newLetter, newNumber)
                 return True
 
             else:
@@ -98,7 +126,7 @@ class Board:
 
             if destination != "." and destination.islower():  # black piece
                 print("VALID")
-                self.movePiece(letter, number, newLetter, newNumber)
+                self._executeMove(letter, number, newLetter, newNumber)
                 return True
 
             else:
@@ -138,7 +166,7 @@ class Board:
     
                 if destination == ".":
                     print("VALID")
-                    self.movePiece(letter, number, newLetter, newNumber)
+                    self._executeMove(letter, number, newLetter, newNumber)
                     return True
     
                 else:
@@ -153,7 +181,7 @@ class Board:
     
                 if middleSquare == "." and destination == ".":
                     print("VALID")
-                    self.movePiece(letter, number, newLetter, newNumber)
+                    self._executeMove(letter, number, newLetter, newNumber)
                     return True
     
                 else:
@@ -166,7 +194,7 @@ class Board:
     
                 if destination != "." and destination.isupper():  # black piece
                     print("VALID")
-                    self.movePiece(letter, number, newLetter, newNumber)
+                    self._executeMove(letter, number, newLetter, newNumber)
                     return True
     
                 else:
@@ -178,12 +206,67 @@ class Board:
             return False
     
 
+    def rookLogic(self, letter, number, newLetter, newNumber):
+
+        piece = self.board[rankToRow[number]][indexLetters[letter]]
+
+        if piece not in ["R", "r"]:
+            print("NOT A ROOK")
+            return False
+
+        startRow = rankToRow[number]
+        endRow = rankToRow[newNumber]
+
+        startCol = indexLetters[letter]
+        endCol = indexLetters[newLetter]
+
+        target = self.board[endRow][endCol]
+        
+                # Can't capture own piece
+        if target != ".":
+            if piece.isupper() == target.isupper():
+                print("CANNOT CAPTURE OWN PIECE")
+                return False
+
+        # Must move in one direction only
+        if startRow != endRow and startCol != endCol:
+            print("INVALID ROOK MOVE")
+            return False
+
+        # Horizontal move
+        if startRow == endRow:
+
+            step = 1 if endCol > startCol else -1
+
+            for col in range(startCol + step, endCol, step):
+                if self.board[startRow][col] != ".":
+                    print("PATH BLOCKED")
+                    return False
+
+        # Vertical move
+        else:
+
+            step = 1 if endRow > startRow else -1
+
+            for row in range(startRow + step, endRow, step):
+                if self.board[row][startCol] != ".":
+                    print("PATH BLOCKED")
+                    return False
+
+        
+
+        self._executeMove(letter, number, newLetter, newNumber)
+        return True
+
+    
     def resetBoard(self):
         self.board = self.createBoard()
         self.printBoard()
     
 
 game = Board()
-#game.movePiece("a",2,"a",3)
-game.resetBoard()
+# #game.movePiece("a",2,"a",3)
+#game.resetBoard()
 
+#game.printBoard()
+game.rookLogic("a",1,"a",3)
