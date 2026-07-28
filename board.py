@@ -258,6 +258,55 @@ class Board:
         self._executeMove(letter, number, newLetter, newNumber)
         return True
 
+
+    def bishopLogic(self, letter, number, newLetter, newNumber):
+
+        if newLetter not in indexLetters or newNumber not in rankToRow:
+            print("OUT OF BOUNDS")
+            return False
+
+        startRow = rankToRow[number]
+        endRow = rankToRow[newNumber]
+
+        startCol = indexLetters[letter]
+        endCol = indexLetters[newLetter]
+
+        piece = self.board[startRow][startCol]
+
+        if piece not in ["B", "b"]:
+            print("NOT A BISHOP")
+            return False
+
+        target = self.board[endRow][endCol]
+
+        # Can't capture own piece
+        if target != "." and piece.isupper() == target.isupper():
+            print("CANNOT CAPTURE OWN PIECE")
+            return False
+
+        # Must move diagonally
+        if abs(startRow - endRow) != abs(startCol - endCol):
+            print("INVALID")
+            return False
+
+        rowStep = 1 if endRow > startRow else -1
+        colStep = 1 if endCol > startCol else -1
+
+        r = startRow + rowStep
+        c = startCol + colStep
+
+        while r != endRow:
+            if self.board[r][c] != ".":
+                print("PATH BLOCKED")
+                return False
+            r += rowStep
+            c += colStep
+
+        self._executeMove(letter, number, newLetter, newNumber)
+        return True
+
+
+
     
     def resetBoard(self):
         self.board = self.createBoard()
