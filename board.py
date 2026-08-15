@@ -388,6 +388,43 @@ class Board:
         print("INVALID")
         return False
 
+    def kingLogic(self, letter, number, newLetter, newNumber):
+
+        if newLetter not in indexLetters or newNumber not in rankToRow:
+            print("OUT OF BOUNDS")
+            return False
+
+        startRow = rankToRow[number]
+        endRow = rankToRow[newNumber]
+        startCol = indexLetters[letter]
+        endCol = indexLetters[newLetter]
+
+        target = self.board[endRow][endCol]
+        piece = self.board[startRow][startCol]
+
+        if piece not in ["k", "K"]:
+            print("NOT A KING")
+            return False
+
+        if target != "." and target.isupper() == piece.isupper():
+            print("CANT CAPTURE OWN PIECE")
+            return False
+
+        if endCol == startCol and abs(startRow - endRow) == 1:
+            self._executeMove(letter, number, newLetter, newNumber)
+            return True
+
+        if endRow == startRow and abs(startCol - endCol) == 1:
+            self._executeMove(letter, number, newLetter, newNumber)
+            return True
+
+        if abs(startRow - endRow) == 1 and abs(startCol - endCol) == 1:
+            self._executeMove(letter, number, newLetter, newNumber)
+            return True
+
+        print("INVALID")
+        return False
+
     def resetBoard(self):
         self.board = self.createBoard()
         self.printBoard()
