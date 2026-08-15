@@ -358,13 +358,35 @@ class Board:
         startCol = indexLetters[letter]
         endCol = indexLetters[newLetter]
 
-        piece = piece = self.board[startRow][startCol]
+        target = self.board[endRow][endCol]
+        piece = self.board[startRow][startCol]
 
         if piece not in ["n", "N"]:
             print("NOT A KNIGHT")
             return False
 
-        pass
+        if target != "." and target.isupper() == piece.isupper():
+            print("CANT CAPTURE OWN PIECE")
+            return False
+
+        if abs(startCol - endCol) == 2:
+            if abs(endRow - startRow) != 1:
+                print("INVALID")
+                return False
+            elif abs(endRow - startRow) == 1:
+                self._executeMove(letter, number, newLetter, newNumber)
+                return True
+
+        if abs(startRow - endRow) == 2:
+            if abs(endCol - startCol) != 1:
+                print("INVALID")
+                return False
+            elif abs(endCol - startCol) == 1:
+                self._executeMove(letter, number, newLetter, newNumber)
+                return True
+
+        print("INVALID")
+        return False
 
     def resetBoard(self):
         self.board = self.createBoard()
