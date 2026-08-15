@@ -46,6 +46,19 @@ class Board:
 
         elif piece in ("R", "r"):
             return self.rookLogic(letter, number, newLetter, newNumber)
+
+        elif piece in ("n", "N"):
+            return self.knightLogic(letter, number, newLetter, newNumber)
+
+        elif piece in ("k", "K"):
+            return self.kingLogic(letter, number, newLetter, newNumber)
+
+        elif piece in ("b", "B"):
+            return self.bishopLogic(letter, number, newLetter, newNumber)
+
+        elif piece in ("q", "Q"):
+            return self.queenLogic(letter, number, newLetter, newNumber)
+
         else:
             print("PIECE NOT IMPLEMENTED")
             return False
