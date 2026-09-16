@@ -4,8 +4,15 @@ rankToRow = {8: 0, 7: 1, 6: 2, 5: 3, 4: 4, 3: 5, 2: 6, 1: 7}
 
 
 class Board:
+
     def __init__(self):
         self.board = self.createBoard()
+
+        self.whiteKingPos = ("e", 1)
+        self.blackKingPos = ("e", 8)
+
+        self.turn = 1
+
         self.moveFunctions = {
             "P": self.whitePawnValidation,
             "p": self.blackPawnValidation,
@@ -39,6 +46,14 @@ class Board:
 
     def movePiece(self, letter, number, newLetter, newNumber):
 
+        if piece.isupper() and self.turn == 0:
+            print("Not Your Turn")
+            return False
+
+        if piece.islower() and self.turn == 1:
+            print("Not Your Turn")
+            return False
+
         if letter not in indexLetters or newLetter not in indexLetters:
             print("INVALID FILE")
             return False
@@ -53,58 +68,75 @@ class Board:
             print("NO PIECE EXISTS")
             return False
 
+        valid = None
+
         if piece == "P":
             valid = self.whitePawnValidation(letter, number, newLetter, newNumber)
 
             if valid:
+                valid = self.isMoveLegal(letter, number, newLetter, newNumber)
+
+            if valid:
                 self._executeMove(letter, number, newLetter, newNumber)
-            return valid
 
         elif piece == "p":
             valid = self.blackPawnValidation(letter, number, newLetter, newNumber)
 
             if valid:
+                valid = self.isMoveLegal(letter, number, newLetter, newNumber)
+
+            if valid:
                 self._executeMove(letter, number, newLetter, newNumber)
-            return valid
 
         elif piece in ("R", "r"):
             valid = self.rookLogic(letter, number, newLetter, newNumber)
 
             if valid:
+                valid = self.isMoveLegal(letter, number, newLetter, newNumber)
+
+            if valid:
                 self._executeMove(letter, number, newLetter, newNumber)
-            return valid
 
         elif piece in ("n", "N"):
             valid = self.knightLogic(letter, number, newLetter, newNumber)
 
             if valid:
+                valid = self.isMoveLegal(letter, number, newLetter, newNumber)
+
+            if valid:
                 self._executeMove(letter, number, newLetter, newNumber)
-            return valid
 
         elif piece in ("k", "K"):
             valid = self.kingLogic(letter, number, newLetter, newNumber)
 
             if valid:
+                valid = self.isMoveLegal(letter, number, newLetter, newNumber)
+
+            if valid:
                 self._executeMove(letter, number, newLetter, newNumber)
-            return valid
 
         elif piece in ("b", "B"):
             valid = self.bishopLogic(letter, number, newLetter, newNumber)
 
             if valid:
+                valid = self.isMoveLegal(letter, number, newLetter, newNumber)
+
+            if valid:
                 self._executeMove(letter, number, newLetter, newNumber)
-            return valid
 
         elif piece in ("q", "Q"):
             valid = self.queenLogic(letter, number, newLetter, newNumber)
 
             if valid:
-                self._executeMove(letter, number, newLetter, newNumber)
-            return valid
+                valid = self.isMoveLegal(letter, number, newLetter, newNumber)
 
-        else:
-            print("PIECE NOT IMPLEMENTED")
-            return False
+            if valid:
+                self._executeMove(letter, number, newLetter, newNumber)
+
+        if valid:
+            self.turn = not self.turn
+
+        return valid
 
     def getPieceMoves(self, letter, number):
         piece = self.board[rankToRow[number]][indexLetters[letter]]
@@ -121,31 +153,121 @@ class Board:
 
                 if valid:
                     valid_moves.append((letter, number, newLetter, newNumber))
+        return valid_moves
+
+    def isMoveLegal(self, letter, number, newLetter, newNumber):
+        oldBoard = [row[:] for row in self.board]
+        oldWhiteKingPos = self.whiteKingPos
+        oldBlackKingPos = self.blackKingPos
+
+        # Make the move temporarily
+        self._executeMove(letter, number, newLetter, newNumber)
+
+        # Figure out whose king we need to check
+        piece = oldBoard[rankToRow[number]][indexLetters[letter]]
+
+        if piece.isupper():
+            legal = not self.isInCheck("White")
+        else:
+            legal = not self.isInCheck("Black")
+
+        # Restore the original position
+        self.board = oldBoard
+        self.whiteKingPos = oldWhiteKingPos
+        self.blackKingPos = oldBlackKingPos
+
+        return legal
+
+    def getLegalMoves(self, letter, number):
+        possible_moves = self.getPieceMoves(letter, number)
+        legal_moves = []
+
+        for move in possible_moves:
+            if self.isMoveLegal(move[0], move[1], move[2], move[3]):
+                legal_moves.append(move)
+        return legal_moves
 
     def _executeMove(self, letter, number, newLetter, newNumber):
+        piece = self.board[rankToRow[number]][indexLetters[letter]]
 
-        self.board[rankToRow[newNumber]][indexLetters[newLetter]] = self.board[
-            rankToRow[number]
-        ][indexLetters[letter]]
-
+        self.board[rankToRow[newNumber]][indexLetters[newLetter]] = piece
         self.board[rankToRow[number]][indexLetters[letter]] = "."
 
-        self.printBoard()
+        if piece == "K":
+            self.whiteKingPos = (newLetter, newNumber)
+        elif piece == "k":
+            self.blackKingPos = (newLetter, newNumber)
+
+    def isSquareAttacked(self, letter, number, side):
+
+        for row in range(8):
+            for col in range(8):
+                piece = self.board[row][col]
+
+                if piece == ".":
+                    continue
+
+                if side == "White" and not piece.isupper():
+                    continue
+
+                if side == "Black" and not piece.islower():
+                    continue
+
+                piece_letter = Lettersindex[col]
+                piece_number = 8 - row
+
+                if piece in ("P", "p"):
+
+                    if piece == "P":
+                        attackNumber = piece_number + 1
+                    else:
+                        attackNumber = piece_number - 1
+
+                    attackCols = [col - 1, col + 1]
+
+                    for attackCol in attackCols:
+                        if 0 <= attackCol < 8:
+                            attackLetter = Lettersindex[attackCol]
+
+                            if attackLetter == letter and attackNumber == number:
+                                return True
+
+                    continue
+
+                moves = self.getPieceMoves(piece_letter, piece_number)
+
+                for move in moves:
+                    if move[2] == letter and move[3] == number:
+                        return True
+
+        return False
+
+    def isInCheck(self, side):
+
+        if side == "White":
+            letter, number = self.whiteKingPos
+            return self.isSquareAttacked(letter, number, "Black")
+
+        elif side == "Black":
+            letter, number = self.blackKingPos
+            return self.isSquareAttacked(letter, number, "White")
+
+        return False
 
     def whitePawnValidation(self, letter, number, newLetter, newNumber):
 
         # Check starting position contains a white pawn
         if self.board[rankToRow[number]][indexLetters[letter]] != "P":
-            print("NO WHITE PAWN EXISTS")
+
             return False
 
         # Check bounds
         if newNumber < 1 or newNumber > 8:
-            print("INVALID")
+
             return False
 
         if newLetter not in indexLetters:
-            print("INVALID")
+
             return False
 
         startCol = indexLetters[letter]
@@ -160,12 +282,11 @@ class Board:
         if newLetter == letter and newNumber == number + 1:
 
             if destination == ".":
-                print("VALID")
 
                 return True
 
             else:
-                print("INVALID")
+
                 return False
 
         # Moving forward two squares from starting position
@@ -174,43 +295,40 @@ class Board:
             middleSquare = self.board[rankToRow[3]][startCol]
 
             if middleSquare == "." and destination == ".":
-                print("VALID")
 
                 return True
 
             else:
-                print("INVALID")
+
                 return False
 
         # Capturing diagonally
         if newNumber == number + 1 and abs(newCol - startCol) == 1:
 
             if destination != "." and destination.islower():  # black piece
-                print("VALID")
 
                 return True
 
             else:
-                print("INVALID")
+
                 return False
 
-        print("INVALID")
         return False
 
     def blackPawnValidation(self, letter, number, newLetter, newNumber):
 
         # Check starting position contains a white pawn
         if self.board[rankToRow[number]][indexLetters[letter]] != "p":
-            print("NO BLACK PAWN EXISTS")
+
             return False
 
         # Check bounds
         if newNumber < 1 or newNumber > 8:
-            print("INVALID")
+
             return False
 
         if newLetter not in indexLetters:
-            print("INVALID")
+
             return False
 
         startCol = indexLetters[letter]
@@ -225,12 +343,11 @@ class Board:
         if newLetter == letter and newNumber == number - 1:
 
             if destination == ".":
-                print("VALID")
 
                 return True
 
             else:
-                print("INVALID")
+
                 return False
 
         # Moving forward two squares from starting position
@@ -239,27 +356,24 @@ class Board:
             middleSquare = self.board[rankToRow[6]][startCol]
 
             if middleSquare == "." and destination == ".":
-                print("VALID")
 
                 return True
 
             else:
-                print("INVALID")
+
                 return False
 
         # Capturing diagonally
         if newNumber == number - 1 and abs(newCol - startCol) == 1:
 
             if destination != "." and destination.isupper():  # black piece
-                print("VALID")
 
                 return True
 
             else:
-                print("INVALID")
+
                 return False
 
-        print("INVALID")
         return False
 
     def rookLogic(self, letter, number, newLetter, newNumber):
@@ -267,7 +381,7 @@ class Board:
         piece = self.board[rankToRow[number]][indexLetters[letter]]
 
         if piece not in ["R", "r"]:
-            print("NOT A ROOK")
+
             return False
 
         startRow = rankToRow[number]
@@ -281,12 +395,12 @@ class Board:
         # Can't capture own piece
         if target != ".":
             if piece.isupper() == target.isupper():
-                print("CANNOT CAPTURE OWN PIECE")
+
                 return False
 
         # Must move in one direction only
         if startRow != endRow and startCol != endCol:
-            print("INVALID ROOK MOVE")
+
             return False
 
         # Horizontal move
@@ -296,7 +410,7 @@ class Board:
 
             for col in range(startCol + step, endCol, step):
                 if self.board[startRow][col] != ".":
-                    print("PATH BLOCKED")
+
                     return False
 
         # Vertical move
@@ -306,7 +420,7 @@ class Board:
 
             for row in range(startRow + step, endRow, step):
                 if self.board[row][startCol] != ".":
-                    print("PATH BLOCKED")
+
                     return False
 
         return True
@@ -314,7 +428,6 @@ class Board:
     def bishopLogic(self, letter, number, newLetter, newNumber):
 
         if newLetter not in indexLetters or newNumber not in rankToRow:
-            print("OUT OF BOUNDS")
             return False
 
         startRow = rankToRow[number]
@@ -326,19 +439,16 @@ class Board:
         piece = self.board[startRow][startCol]
 
         if piece not in ["B", "b"]:
-            print("NOT A BISHOP")
             return False
 
         target = self.board[endRow][endCol]
 
         # Can't capture own piece
         if target != "." and piece.isupper() == target.isupper():
-            print("CANNOT CAPTURE OWN PIECE")
             return False
 
         # Must move diagonally
         if abs(startRow - endRow) != abs(startCol - endCol):
-            print("INVALID")
             return False
 
         rowStep = 1 if endRow > startRow else -1
@@ -349,8 +459,8 @@ class Board:
 
         while r != endRow:
             if self.board[r][c] != ".":
-                print("PATH BLOCKED")
                 return False
+
             r += rowStep
             c += colStep
 
@@ -358,7 +468,6 @@ class Board:
 
     def queenLogic(self, letter, number, newLetter, newNumber):
         if newLetter not in indexLetters or newNumber not in rankToRow:
-            print("OUT OF BOUNDS")
             return False
 
         startRow = rankToRow[number]
@@ -370,10 +479,9 @@ class Board:
         target = self.board[endRow][endCol]
 
         if piece not in ["Q", "q"]:
-            print("NOT A Queen")
             return False
+
         if target != "." and piece.isupper() == target.isupper():
-            print("CANNOT CAPTURE OWN PIECE")
             return False
 
         # diagonally
@@ -386,7 +494,7 @@ class Board:
 
             while r != endRow:
                 if self.board[r][c] != ".":
-                    print("PATH BLOCKED")
+
                     return False
                 r += rowStep
                 c += colStep
@@ -398,7 +506,6 @@ class Board:
 
             for col in range(startCol + step, endCol, step):
                 if self.board[startRow][col] != ".":
-                    print("PATH BLOCKED")
                     return False
 
         # Vertical move
@@ -408,18 +515,16 @@ class Board:
 
             for row in range(startRow + step, endRow, step):
                 if self.board[row][startCol] != ".":
-                    print("PATH BLOCKED")
+
                     return False
 
         else:
-            print("INAVLID MOVE")
             return False
 
         return True
 
     def knightLogic(self, letter, number, newLetter, newNumber):
         if newLetter not in indexLetters or newNumber not in rankToRow:
-            print("OUT OF BOUNDS")
             return False
 
         startRow = rankToRow[number]
@@ -431,7 +536,6 @@ class Board:
         piece = self.board[startRow][startCol]
 
         if piece not in ["n", "N"]:
-            print("NOT A KNIGHT")
             return False
 
         valid = False
@@ -441,13 +545,11 @@ class Board:
             valid = True
 
         if not valid:
-            print("INVALID")
             return False
 
         # Now check the target piece
         target = self.board[endRow][endCol]
         if target != "." and target.isupper() == piece.isupper():
-            print("CANT CAPTURE OWN PIECE")
             return False
 
         return True
@@ -455,7 +557,6 @@ class Board:
     def kingLogic(self, letter, number, newLetter, newNumber):
 
         if newLetter not in indexLetters or newNumber not in rankToRow:
-            print("OUT OF BOUNDS")
             return False
 
         startRow = rankToRow[number]
@@ -467,7 +568,6 @@ class Board:
         piece = self.board[startRow][startCol]
 
         if piece not in ["k", "K"]:
-            print("NOT A KING")
             return False
 
         valid = False
@@ -481,11 +581,9 @@ class Board:
             valid = True
 
         if not valid:
-            print("INVALID")
             return False
 
         if target != "." and target.isupper() == piece.isupper():
-            print("CANT CAPTURE OWN PIECE")
             return False
 
         return True
@@ -496,11 +594,5 @@ class Board:
 
 
 game = Board()
-moves = game.getPieceMoves("b", 1)
-print(moves)
-game.printBoard()
-# #game.movePiece("a",2,"a",3)
-# game.resetBoard()
 
-# game.printBoard()
-# game.rookLogic("a",1,"a",3)
+print(game.getLegalMoves("e", 2))
