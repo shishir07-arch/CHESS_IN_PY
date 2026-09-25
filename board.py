@@ -46,14 +46,6 @@ class Board:
 
     def movePiece(self, letter, number, newLetter, newNumber):
 
-        if piece.isupper() and self.turn == 0:
-            print("Not Your Turn")
-            return False
-
-        if piece.islower() and self.turn == 1:
-            print("Not Your Turn")
-            return False
-
         if letter not in indexLetters or newLetter not in indexLetters:
             print("INVALID FILE")
             return False
@@ -63,6 +55,14 @@ class Board:
             return False
 
         piece = self.board[rankToRow[number]][indexLetters[letter]]
+
+        if piece.isupper() and self.turn == 0:
+            print("Not Your Turn")
+            return False
+
+        if piece.islower() and self.turn == 1:
+            print("Not Your Turn")
+            return False
 
         if piece == ".":
             print("NO PIECE EXISTS")
@@ -591,8 +591,3 @@ class Board:
     def resetBoard(self):
         self.board = self.createBoard()
         self.printBoard()
-
-
-game = Board()
-
-print(game.getLegalMoves("e", 2))
